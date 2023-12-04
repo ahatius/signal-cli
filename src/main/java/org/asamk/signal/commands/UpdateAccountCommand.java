@@ -16,6 +16,7 @@ import org.asamk.signal.output.OutputWriter;
 import org.asamk.signal.output.PlainTextWriter;
 
 import java.io.IOException;
+import java.util.Objects;
 
 public class UpdateAccountCommand implements JsonRpcLocalCommand {
 
@@ -52,11 +53,12 @@ public class UpdateAccountCommand implements JsonRpcLocalCommand {
                 m.setUsername(username);
                 final var newUsername = m.getUsername();
                 final var newUsernameLink = m.getUsernameLink();
-                switch (outputWriter) {
-                    case PlainTextWriter w -> w.println("Your new username: {} ({})",
+                if (Objects.requireNonNull(outputWriter) instanceof PlainTextWriter w) {
+                    w.println("Your new username: {} ({})",
                             newUsername,
                             newUsernameLink == null ? "-" : newUsernameLink.getUrl());
-                    case JsonWriter w -> w.write(new JsonAccountResponse(newUsername,
+                } else if (outputWriter instanceof JsonWriter w) {
+                    w.write(new JsonAccountResponse(newUsername,
                             newUsernameLink == null ? null : newUsernameLink.getUrl()));
                 }
             } catch (IOException e) {

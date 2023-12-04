@@ -110,14 +110,14 @@ public class DbusSignalControlImpl implements org.asamk.SignalControl {
         } catch (TimeoutException | IOException e) {
             throw new SignalControl.Error.Failure(e.getClass().getSimpleName() + " " + e.getMessage());
         }
-        Thread.ofPlatform().name("dbus-link").start(() -> {
+        new Thread(() -> {
             final ProvisioningManager provisioningManager = c.getProvisioningManagerFor(deviceLinkUri);
             try {
                 provisioningManager.finishDeviceLink(newDeviceName);
             } catch (IOException | TimeoutException | UserAlreadyExistsException e) {
                 logger.warn("Failed to finish linking", e);
             }
-        });
+        }, "dbus-link");
         return deviceLinkUri.toString();
     }
 

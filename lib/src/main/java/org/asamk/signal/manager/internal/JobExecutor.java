@@ -27,6 +27,6 @@ public class JobExecutor implements AutoCloseable {
 
     @Override
     public void close() {
-        executorService.close();
+        executorService.shutdown();
     }
 }

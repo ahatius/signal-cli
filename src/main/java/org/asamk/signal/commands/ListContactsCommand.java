@@ -14,6 +14,7 @@ import org.asamk.signal.output.PlainTextWriter;
 import org.asamk.signal.util.CommandUtil;
 
 import java.util.Base64;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -51,47 +52,44 @@ public class ListContactsCommand implements JsonRpcLocalCommand {
                 recipientIdentifiers,
                 Optional.ofNullable(name));
 
-        switch (outputWriter) {
-            case PlainTextWriter writer -> {
-                for (var r : recipients) {
-                    final var contact = r.getContact() == null ? Contact.newBuilder().build() : r.getContact();
-                    final var profile = r.getProfile() == null ? Profile.newBuilder().build() : r.getProfile();
-                    writer.println(
-                            "Number: {} Name: {} Profile name: {} Username: {} Color: {} Blocked: {} Message expiration: {}",
-                            r.getAddress().getLegacyIdentifier(),
-                            contact.getName(),
-                            profile.getDisplayName(),
-                            r.getAddress().username().orElse(""),
-                            contact.color(),
-                            contact.isBlocked(),
-                            contact.messageExpirationTime() == 0 ? "disabled" : contact.messageExpirationTime() + "s");
-                }
+        if (Objects.requireNonNull(outputWriter) instanceof PlainTextWriter writer) {
+            for (var r : recipients) {
+                final var contact = r.getContact() == null ? Contact.newBuilder().build() : r.getContact();
+                final var profile = r.getProfile() == null ? Profile.newBuilder().build() : r.getProfile();
+                writer.println(
+                        "Number: {} Name: {} Profile name: {} Username: {} Color: {} Blocked: {} Message expiration: {}",
+                        r.getAddress().getLegacyIdentifier(),
+                        contact.getName(),
+                        profile.getDisplayName(),
+                        r.getAddress().username().orElse(""),
+                        contact.color(),
+                        contact.isBlocked(),
+                        contact.messageExpirationTime() == 0 ? "disabled" : contact.messageExpirationTime() + "s");
             }
-            case JsonWriter writer -> {
-                final var jsonContacts = recipients.stream().map(r -> {
-                    final var address = r.getAddress();
-                    final var contact = r.getContact() == null ? Contact.newBuilder().build() : r.getContact();
-                    return new JsonContact(address.number().orElse(null),
-                            address.uuid().map(UUID::toString).orElse(null),
-                            address.username().orElse(null),
-                            contact.getName(),
-                            contact.color(),
-                            contact.isBlocked(),
-                            contact.messageExpirationTime(),
-                            r.getProfile() == null
-                                    ? null
-                                    : new JsonContact.JsonProfile(r.getProfile().getLastUpdateTimestamp(),
-                                            r.getProfile().getGivenName(),
-                                            r.getProfile().getFamilyName(),
-                                            r.getProfile().getAbout(),
-                                            r.getProfile().getAboutEmoji(),
-                                            r.getProfile().getMobileCoinAddress() == null
-                                                    ? null
-                                                    : Base64.getEncoder()
-                                                            .encodeToString(r.getProfile().getMobileCoinAddress())));
-                }).toList();
-                writer.write(jsonContacts);
-            }
+        } else if (outputWriter instanceof JsonWriter writer) {
+            final var jsonContacts = recipients.stream().map(r -> {
+                final var address = r.getAddress();
+                final var contact = r.getContact() == null ? Contact.newBuilder().build() : r.getContact();
+                return new JsonContact(address.number().orElse(null),
+                        address.uuid().map(UUID::toString).orElse(null),
+                        address.username().orElse(null),
+                        contact.getName(),
+                        contact.color(),
+                        contact.isBlocked(),
+                        contact.messageExpirationTime(),
+                        r.getProfile() == null
+                                ? null
+                                : new JsonContact.JsonProfile(r.getProfile().getLastUpdateTimestamp(),
+                                        r.getProfile().getGivenName(),
+                                        r.getProfile().getFamilyName(),
+                                        r.getProfile().getAbout(),
+                                        r.getProfile().getAboutEmoji(),
+                                        r.getProfile().getMobileCoinAddress() == null
+                                                ? null
+                                                : Base64.getEncoder()
+                                                        .encodeToString(r.getProfile().getMobileCoinAddress())));
+            }).toList();
+            writer.write(jsonContacts);
         }
     }
 

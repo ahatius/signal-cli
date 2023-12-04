@@ -215,24 +215,26 @@ public class SignalJsonRpcCommandHandler {
                     e.getMessage(),
                     null));
         } catch (CommandException ce) {
-            switch (ce) {
-                case UserErrorException e -> throw new JsonRpcException(new JsonRpcResponse.Error(USER_ERROR,
+            if (ce instanceof UserErrorException e) {
+                throw new JsonRpcException(new JsonRpcResponse.Error(USER_ERROR,
                         e.getMessage(),
                         getErrorDataNode(objectMapper, result)));
-                case IOErrorException e -> throw new JsonRpcException(new JsonRpcResponse.Error(IO_ERROR,
+            } else if (ce instanceof IOErrorException e) {
+                throw new JsonRpcException(new JsonRpcResponse.Error(IO_ERROR,
                         e.getMessage(),
                         getErrorDataNode(objectMapper, result)));
-                case UntrustedKeyErrorException e -> throw new JsonRpcException(new JsonRpcResponse.Error(
-                        UNTRUSTED_KEY_ERROR,
+            } else if (ce instanceof UntrustedKeyErrorException e) {
+                throw new JsonRpcException(new JsonRpcResponse.Error(UNTRUSTED_KEY_ERROR,
                         e.getMessage(),
                         getErrorDataNode(objectMapper, result)));
-                case RateLimitErrorException e -> throw new JsonRpcException(new JsonRpcResponse.Error(RATELIMIT_ERROR,
+            } else if (ce instanceof RateLimitErrorException e) {
+                throw new JsonRpcException(new JsonRpcResponse.Error(RATELIMIT_ERROR,
                         e.getMessage(),
                         getErrorDataNode(objectMapper, result)));
-                case UnexpectedErrorException e ->
-                        throw new JsonRpcException(new JsonRpcResponse.Error(JsonRpcResponse.Error.INTERNAL_ERROR,
-                                e.getMessage(),
-                                getErrorDataNode(objectMapper, result)));
+            } else if (ce instanceof UnexpectedErrorException e) {
+                throw new JsonRpcException(new JsonRpcResponse.Error(JsonRpcResponse.Error.INTERNAL_ERROR,
+                        e.getMessage(),
+                        getErrorDataNode(objectMapper, result)));
             }
         } catch (Throwable e) {
             logger.error("Command execution failed", e);

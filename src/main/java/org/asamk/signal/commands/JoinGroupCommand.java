@@ -17,6 +17,7 @@ import org.asamk.signal.util.SendMessageResultUtils;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 
 public class JoinGroupCommand implements JsonRpcLocalCommand {
 
@@ -52,38 +53,34 @@ public class JoinGroupCommand implements JsonRpcLocalCommand {
         try {
             final var results = m.joinGroup(linkUrl);
             var newGroupId = results.first();
-            switch (outputWriter) {
-                case JsonWriter writer -> {
-                    var jsonResults = SendMessageResultUtils.getJsonSendMessageResults(results.second().results());
-                    if (!m.getGroup(newGroupId).isMember()) {
-                        writer.write(Map.of("timestamp",
-                                results.second().timestamp(),
-                                "results",
-                                jsonResults,
-                                "groupId",
-                                newGroupId.toBase64(),
-                                "onlyRequested",
-                                true));
-                    } else {
-                        writer.write(Map.of("timestamp",
-                                results.second().timestamp(),
-                                "results",
-                                jsonResults,
-                                "groupId",
-                                newGroupId.toBase64()));
-                    }
+            if (Objects.requireNonNull(outputWriter) instanceof JsonWriter writer) {
+                var jsonResults = SendMessageResultUtils.getJsonSendMessageResults(results.second().results());
+                if (!m.getGroup(newGroupId).isMember()) {
+                    writer.write(Map.of("timestamp",
+                            results.second().timestamp(),
+                            "results",
+                            jsonResults,
+                            "groupId",
+                            newGroupId.toBase64(),
+                            "onlyRequested",
+                            true));
+                } else {
+                    writer.write(Map.of("timestamp",
+                            results.second().timestamp(),
+                            "results",
+                            jsonResults,
+                            "groupId",
+                            newGroupId.toBase64()));
                 }
-                case PlainTextWriter writer -> {
-                    if (!m.getGroup(newGroupId).isMember()) {
-                        writer.println("Requested to join group \"{}\"", newGroupId.toBase64());
-                    } else {
-                        writer.println("Joined group \"{}\"", newGroupId.toBase64());
-                    }
-                    var errors = SendMessageResultUtils.getErrorMessagesFromSendMessageResults(results.second()
-                            .results());
-                    SendMessageResultUtils.printSendMessageResultErrors(writer, errors);
-                    writer.println("{}", results.second().timestamp());
+            } else if (outputWriter instanceof PlainTextWriter writer) {
+                if (!m.getGroup(newGroupId).isMember()) {
+                    writer.println("Requested to join group \"{}\"", newGroupId.toBase64());
+                } else {
+                    writer.println("Joined group \"{}\"", newGroupId.toBase64());
                 }
+                var errors = SendMessageResultUtils.getErrorMessagesFromSendMessageResults(results.second().results());
+                SendMessageResultUtils.printSendMessageResultErrors(writer, errors);
+                writer.println("{}", results.second().timestamp());
             }
         } catch (IOException e) {
             throw new IOErrorException("Failed to send message: "

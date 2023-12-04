@@ -27,32 +27,26 @@ public class SendMessageResultUtils {
     }
 
     public static void outputResult(final OutputWriter outputWriter, final SendGroupMessageResults sendMessageResults) {
-        switch (outputWriter) {
-            case PlainTextWriter writer -> {
-                var errors = getErrorMessagesFromSendMessageResults(sendMessageResults.results());
-                printSendMessageResultErrors(writer, errors);
-                writer.println("{}", sendMessageResults.timestamp());
-            }
-            case JsonWriter writer -> {
-                var results = getJsonSendMessageResults(sendMessageResults.results());
-                writer.write(Map.of("timestamp", sendMessageResults.timestamp(), "results", results));
-            }
+        if (Objects.requireNonNull(outputWriter) instanceof PlainTextWriter writer) {
+            var errors = getErrorMessagesFromSendMessageResults(sendMessageResults.results());
+            printSendMessageResultErrors(writer, errors);
+            writer.println("{}", sendMessageResults.timestamp());
+        } else if (outputWriter instanceof JsonWriter writer) {
+            var results = getJsonSendMessageResults(sendMessageResults.results());
+            writer.write(Map.of("timestamp", sendMessageResults.timestamp(), "results", results));
         }
     }
 
     public static void outputResult(
             final OutputWriter outputWriter, final SendMessageResults sendMessageResults
     ) throws CommandException {
-        switch (outputWriter) {
-            case PlainTextWriter writer -> {
-                var errors = getErrorMessagesFromSendMessageResults(sendMessageResults.results());
-                printSendMessageResultErrors(writer, errors);
-                writer.println("{}", sendMessageResults.timestamp());
-            }
-            case JsonWriter writer -> {
-                var results = getJsonSendMessageResults(sendMessageResults.results());
-                writer.write(Map.of("timestamp", sendMessageResults.timestamp(), "results", results));
-            }
+        if (Objects.requireNonNull(outputWriter) instanceof PlainTextWriter writer) {
+            var errors = getErrorMessagesFromSendMessageResults(sendMessageResults.results());
+            printSendMessageResultErrors(writer, errors);
+            writer.println("{}", sendMessageResults.timestamp());
+        } else if (outputWriter instanceof JsonWriter writer) {
+            var results = getJsonSendMessageResults(sendMessageResults.results());
+            writer.write(Map.of("timestamp", sendMessageResults.timestamp(), "results", results));
         }
         if (!sendMessageResults.hasSuccess()) {
             if (sendMessageResults.hasOnlyUntrustedIdentity()) {

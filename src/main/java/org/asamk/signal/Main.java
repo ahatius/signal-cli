@@ -122,14 +122,19 @@ public class Main {
     }
 
     private static int getStatusForError(final CommandException e) {
-        return switch (e) {
-            case UserErrorException userErrorException -> 1;
-            case UnexpectedErrorException unexpectedErrorException -> 2;
-            case IOErrorException ioErrorException -> 3;
-            case UntrustedKeyErrorException untrustedKeyErrorException -> 4;
-            case RateLimitErrorException rateLimitErrorException -> 5;
-            case null -> 2;
-        };
+        if (e instanceof UserErrorException) {
+            return 1;
+        } else if (e instanceof UnexpectedErrorException) {
+            return 2;
+        } else if (e instanceof IOErrorException) {
+            return 3;
+        } else if (e instanceof UntrustedKeyErrorException) {
+            return 4;
+        } else if (e instanceof RateLimitErrorException) {
+            return 5;
+        } else  {
+            return 2;
+        }
     }
 
     private record LoggingConfig(int verboseLevel, File logFile, boolean scrubLog) {}

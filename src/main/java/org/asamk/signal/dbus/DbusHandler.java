@@ -116,7 +116,7 @@ public class DbusHandler implements AutoCloseable {
         final var signal = new DbusSignalImpl(m, conn, objectPath, noReceiveOnStart);
         closeables.add(signal);
 
-        return Thread.ofPlatform().name("dbus-init-" + m.getSelfNumber()).start(signal::initObjects);
+        return new Thread(signal::initObjects, "dbus-init-" + m.getSelfNumber());
     }
 
     private Thread exportManager(final DBusConnection conn, final Manager m) {

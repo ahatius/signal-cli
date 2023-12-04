@@ -16,6 +16,7 @@ import org.asamk.signal.output.PlainTextWriter;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class VersionCommand implements JsonRpcLocalCommand, JsonRpcMultiLocalCommand {
 
@@ -56,9 +57,10 @@ public class VersionCommand implements JsonRpcLocalCommand, JsonRpcMultiLocalCom
         final var projectName = BaseConfig.PROJECT_NAME == null ? "signal-cli" : BaseConfig.PROJECT_NAME;
         final var version = BaseConfig.PROJECT_VERSION == null ? "unknown" : BaseConfig.PROJECT_VERSION;
 
-        switch (outputWriter) {
-            case JsonWriter jsonWriter -> jsonWriter.write(Map.of("version", version));
-            case PlainTextWriter plainTextWriter -> plainTextWriter.println("{} {}", projectName, version);
+        if (Objects.requireNonNull(outputWriter) instanceof JsonWriter jsonWriter) {
+            jsonWriter.write(Map.of("version", version));
+        } else if (outputWriter instanceof PlainTextWriter plainTextWriter) {
+            plainTextWriter.println("{} {}", projectName, version);
         }
     }
 }

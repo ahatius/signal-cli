@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public class ReceiveCommand implements LocalCommand, JsonRpcSingleCommand<ReceiveCommand.ReceiveParams> {
@@ -76,10 +77,15 @@ public class ReceiveCommand implements LocalCommand, JsonRpcSingleCommand<Receiv
         final var sendReadReceipts = Boolean.TRUE.equals(ns.getBoolean("send-read-receipts"));
         m.setReceiveConfig(new ReceiveConfig(ignoreAttachments, ignoreStories, sendReadReceipts));
         try {
-            final var handler = switch (outputWriter) {
-                case JsonWriter writer -> new JsonReceiveMessageHandler(m, writer);
-                case PlainTextWriter writer -> new ReceiveMessageHandler(m, writer);
-            };
+            Manager.ReceiveMessageHandler handler;
+            if (Objects.requireNonNull(outputWriter) instanceof JsonWriter writer) {
+                handler = new JsonReceiveMessageHandler(m, writer);
+            } else if (outputWriter instanceof PlainTextWriter writer) {
+                handler = new ReceiveMessageHandler(m, writer);
+            } else {
+                throw new IllegalArgumentException("invalid class");
+            }
+            ;
             final var duration = timeout < 0 ? null : Duration.ofMillis((long) (timeout * 1000));
             final var maxMessages = maxMessagesRaw < 0 ? null : maxMessagesRaw;
             Shutdown.registerShutdownListener(m::stopReceiveMessages);

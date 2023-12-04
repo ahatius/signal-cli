@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Base64;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 public class ListIdentitiesCommand implements JsonRpcLocalCommand {
@@ -57,29 +58,26 @@ public class ListIdentitiesCommand implements JsonRpcLocalCommand {
             identities = m.getIdentities(CommandUtil.getSingleRecipientIdentifier(number, m.getSelfNumber()));
         }
 
-        switch (outputWriter) {
-            case PlainTextWriter writer -> {
-                for (var id : identities) {
-                    printIdentityFingerprint(writer, id);
-                }
+        if (Objects.requireNonNull(outputWriter) instanceof PlainTextWriter writer) {
+            for (var id : identities) {
+                printIdentityFingerprint(writer, id);
             }
-            case JsonWriter writer -> {
-                final var jsonIdentities = identities.stream().map(id -> {
-                    final var address = id.recipient();
-                    var safetyNumber = Util.formatSafetyNumber(id.safetyNumber());
-                    var scannableSafetyNumber = id.scannableSafetyNumber();
-                    return new JsonIdentity(address.number().orElse(null),
-                            address.uuid().map(UUID::toString).orElse(null),
-                            Hex.toString(id.getFingerprint()),
-                            safetyNumber,
-                            scannableSafetyNumber == null
-                                    ? null
-                                    : Base64.getEncoder().encodeToString(scannableSafetyNumber),
-                            id.trustLevel().name(),
-                            id.dateAddedTimestamp());
-                }).toList();
-                writer.write(jsonIdentities);
-            }
+        } else if (outputWriter instanceof JsonWriter writer) {
+            final var jsonIdentities = identities.stream().map(id -> {
+                final var address = id.recipient();
+                var safetyNumber = Util.formatSafetyNumber(id.safetyNumber());
+                var scannableSafetyNumber = id.scannableSafetyNumber();
+                return new JsonIdentity(address.number().orElse(null),
+                        address.uuid().map(UUID::toString).orElse(null),
+                        Hex.toString(id.getFingerprint()),
+                        safetyNumber,
+                        scannableSafetyNumber == null
+                                ? null
+                                : Base64.getEncoder().encodeToString(scannableSafetyNumber),
+                        id.trustLevel().name(),
+                        id.dateAddedTimestamp());
+            }).toList();
+            writer.write(jsonIdentities);
         }
     }
 

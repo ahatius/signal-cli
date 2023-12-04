@@ -1040,7 +1040,7 @@ public class ManagerImpl implements Manager {
         if (receiveThread != null || isReceivingSynchronous) {
             return;
         }
-        receiveThread = Thread.ofPlatform().name("receive-" + threadNumber.getAndIncrement()).start(() -> {
+        receiveThread = new Thread(() -> {
             logger.debug("Starting receiving messages");
             context.getReceiveHelper().receiveMessagesContinuously(this::passReceivedMessageToHandlers);
             logger.debug("Finished receiving messages");
@@ -1054,6 +1054,9 @@ public class ManagerImpl implements Manager {
                 }
             }
         });
+        receiveThread.setName("receive-" + threadNumber.getAndIncrement());
+
+        receiveThread.start();
     }
 
     private void passReceivedMessageToHandlers(MessageEnvelope envelope, Throwable e) {
@@ -1284,13 +1287,13 @@ public class ManagerImpl implements Manager {
     public boolean trustIdentityVerified(
             RecipientIdentifier.Single recipient, IdentityVerificationCode verificationCode
     ) throws UnregisteredRecipientException {
-        if (verificationCode == IdentityVerificationCode.Fingerprint) {
+        if (verificationCode instanceof final IdentityVerificationCode.Fingerprint fingerprint) {
           return trustIdentity(recipient,
                     r -> context.getIdentityHelper().trustIdentityVerified(r, fingerprint.fingerprint()));
-        } else if (verificationCode == IdentityVerificationCode.SafetyNumber) {
+        } else if (verificationCode instanceof final IdentityVerificationCode.SafetyNumber safetyNumber) {
           return trustIdentity(recipient,
                     r -> context.getIdentityHelper().trustIdentityVerifiedSafetyNumber(r, safetyNumber.safetyNumber()));
-        } else if (verificationCode == IdentityVerificationCode.ScannableSafetyNumber) {
+        } else if (verificationCode instanceof final IdentityVerificationCode.ScannableSafetyNumber safetyNumber) {
           return trustIdentity(recipient,
                     r -> context.getIdentityHelper().trustIdentityVerifiedSafetyNumber(r, safetyNumber.safetyNumber()));
         } else {
@@ -1345,7 +1348,7 @@ public class ManagerImpl implements Manager {
         if (thread != null) {
             stopReceiveThread(thread);
         }
-        executor.close();
+        executor.shutdown();
         context.close();
 
         dependencies.getSignalWebSocket().disconnect();

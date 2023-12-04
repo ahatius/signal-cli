@@ -195,11 +195,17 @@ public class DaemonCommand implements MultiLocalCommand, LocalCommand {
     }
 
     private void addDefaultReceiveHandler(Manager m, OutputWriter outputWriter, final boolean isWeakListener) {
-        final var handler = switch (outputWriter) {
-            case PlainTextWriter writer -> new ReceiveMessageHandler(m, writer);
-            case JsonWriter writer -> new JsonReceiveMessageHandler(m, writer);
-            case null -> Manager.ReceiveMessageHandler.EMPTY;
-        };
+        Manager.ReceiveMessageHandler handler;
+        if (outputWriter instanceof PlainTextWriter writer) {
+            handler = new ReceiveMessageHandler(m, writer);
+        } else if (outputWriter instanceof JsonWriter writer) {
+            handler = new JsonReceiveMessageHandler(m, writer);
+        } else if (outputWriter == null) {
+            handler = Manager.ReceiveMessageHandler.EMPTY;
+        } else {
+            throw new IllegalArgumentException("invalid class");
+        }
+
         m.addReceiveHandler(handler, isWeakListener);
     }
 

@@ -60,8 +60,9 @@ public class SocketHandler implements AutoCloseable {
         final var address = socketAddress == null ? "<Unknown socket address>" : socketAddress;
         logger.debug("Starting JSON-RPC server on {}", address);
 
-        listenerThread = Thread.ofPlatform().name("daemon-listener").start(() -> {
-            try (final var executor = Executors.newCachedThreadPool()) {
+        listenerThread = new Thread(() -> {
+            final var executor = Executors.newCachedThreadPool();
+            try {
                 logger.info("Started JSON-RPC server on {}", address);
                 while (true) {
                     final var connectionId = threadNumber.getAndIncrement();
@@ -91,8 +92,12 @@ public class SocketHandler implements AutoCloseable {
                         channels.remove(channel);
                     });
                 }
+            } finally {
+                executor.shutdown();
             }
         });
+        listenerThread.setName("daemon-listener");
+        listenerThread.start();
     }
 
     @Override

@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 public class ListDevicesCommand implements JsonRpcLocalCommand {
 
@@ -42,23 +43,20 @@ public class ListDevicesCommand implements JsonRpcLocalCommand {
             throw new IOErrorException("Failed to get linked devices: " + e.getMessage(), e);
         }
 
-        switch (outputWriter) {
-            case PlainTextWriter writer -> {
-                for (var d : devices) {
-                    writer.println("- Device {}{}:", d.id(), (d.isThisDevice() ? " (this device)" : ""));
-                    writer.indent(w -> {
-                        w.println("Name: {}", d.name());
-                        w.println("Created: {}", DateUtils.formatTimestamp(d.created()));
-                        w.println("Last seen: {}", DateUtils.formatTimestamp(d.lastSeen()));
-                    });
-                }
+        if (Objects.requireNonNull(outputWriter) instanceof PlainTextWriter writer) {
+            for (var d : devices) {
+                writer.println("- Device {}{}:", d.id(), (d.isThisDevice() ? " (this device)" : ""));
+                writer.indent(w -> {
+                    w.println("Name: {}", d.name());
+                    w.println("Created: {}", DateUtils.formatTimestamp(d.created()));
+                    w.println("Last seen: {}", DateUtils.formatTimestamp(d.lastSeen()));
+                });
             }
-            case JsonWriter writer -> {
-                final var jsonDevices = devices.stream()
-                        .map(d -> new JsonDevice(d.id(), d.name(), d.created(), d.lastSeen()))
-                        .toList();
-                writer.write(jsonDevices);
-            }
+        } else if (outputWriter instanceof JsonWriter writer) {
+            final var jsonDevices = devices.stream()
+                    .map(d -> new JsonDevice(d.id(), d.name(), d.created(), d.lastSeen()))
+                    .toList();
+            writer.write(jsonDevices);
         }
     }
 

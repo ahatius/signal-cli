@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 
 public class UploadStickerPackCommand implements JsonRpcLocalCommand {
 
@@ -42,11 +43,10 @@ public class UploadStickerPackCommand implements JsonRpcLocalCommand {
 
         try {
             var url = m.uploadStickerPack(path);
-            switch (outputWriter) {
-                case PlainTextWriter writer -> writer.println("{}", url.getUrl());
-                case JsonWriter writer -> {
-                    writer.write(Map.of("url", url.getUrl()));
-                }
+            if (Objects.requireNonNull(outputWriter) instanceof PlainTextWriter writer) {
+                writer.println("{}", url.getUrl());
+            } else if (outputWriter instanceof JsonWriter writer) {
+                writer.write(Map.of("url", url.getUrl()));
             }
         } catch (IOException e) {
             throw new IOErrorException("Upload error (maybe image size too large):" + e.getMessage(), e);

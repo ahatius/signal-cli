@@ -22,7 +22,7 @@ public class Shutdown {
         initialized = true;
         Signal.handle(new Signal("INT"), Shutdown::handleSignal);
         Signal.handle(new Signal("TERM"), Shutdown::handleSignal);
-        Runtime.getRuntime().addShutdownHook(Thread.ofPlatform().unstarted(() -> {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             logger.debug("JVM is shutting down");
             if (!shutdown.isDone()) {
                 triggerShutdown();
